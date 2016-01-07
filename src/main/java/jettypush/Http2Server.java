@@ -71,9 +71,9 @@ public static void main(String... args) throws Exception
 
     ServletContextHandler context = new ServletContextHandler(server, "/",ServletContextHandler.SESSIONS);
     context.setResourceBase("src/main/resources/docroot");
-    context.addFilter(PushCacheFilter.class,"/*",EnumSet.of(DispatcherType.REQUEST));
+    context.addFilter(HttpPushFilter.class,"/*",EnumSet.of(DispatcherType.REQUEST));
     // context.addFilter(PushSessionCacheFilter.class,"/*",EnumSet.of(DispatcherType.REQUEST));
-    context.addFilter(PushedTilesFilter.class,"/*",EnumSet.of(DispatcherType.REQUEST));
+    //context.addFilter(PushedTilesFilter.class,"/*",EnumSet.of(DispatcherType.REQUEST));
     context.addServlet(new ServletHolder(servlet), "/test/*");
     context.addServlet(DefaultServlet.class, "/").setInitParameter("maxCacheSize","81920");
     server.setHandler(context);
@@ -91,11 +91,10 @@ public static void main(String... args) throws Exception
     server.addConnector(http);
 
     // SSL Context Factory for HTTPS and HTTP/2
-    String jetty_distro = System.getProperty("jetty.distro","../../jetty-distribution/target/distribution");
     SslContextFactory sslContextFactory = new SslContextFactory();
-    sslContextFactory.setKeyStorePath(jetty_distro + "/demo-base/etc/keystore");
-    sslContextFactory.setKeyStorePassword("OBF:1vny1zlo1x8e1vnw1vn61x8g1zlu1vn4");
-    sslContextFactory.setKeyManagerPassword("OBF:1u2u1wml1z7s1z7a1wnl1u2g");
+    sslContextFactory.setKeyStorePath("src/main/resources/keys/keystore");
+    sslContextFactory.setKeyStorePassword("hidden");
+    sslContextFactory.setKeyManagerPassword("hidden");
     sslContextFactory.setCipherComparator(HTTP2Cipher.COMPARATOR);
 
     // HTTPS Configuration
@@ -113,12 +112,11 @@ public static void main(String... args) throws Exception
     SslConnectionFactory ssl = new SslConnectionFactory(sslContextFactory,alpn.getProtocol());
 
     // HTTP/2 Connector
-    ServerConnector http2Connector =
-        new ServerConnector(server,ssl,alpn,h2,new HttpConnectionFactory(https_config));
+    ServerConnector http2Connector = new ServerConnector(server,ssl,alpn,h2,new HttpConnectionFactory(https_config));
     http2Connector.setPort(8443);
     server.addConnector(http2Connector);
 
-    ALPN.debug=false;
+    ALPN.debug=true;
 
     server.start();
     //server.dumpStdErr();
